@@ -8,9 +8,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // If Supabase is not configured, skip auth entirely
+    const url = import.meta.env.VITE_SUPABASE_URL
+    if (!url || url.includes('placeholder')) {
+      setLoading(false)
+      return
+    }
+
     // Load existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      setLoading(false)
+    }).catch(() => {
       setLoading(false)
     })
 

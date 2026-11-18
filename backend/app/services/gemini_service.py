@@ -126,7 +126,8 @@ async def analyze_image(
     }
     prompt = _build_prompt(description, category, locality, language)
 
-    async def _call_gemini():
+    def _call_gemini():
+        """Synchronous Gemini call — run in a thread to avoid blocking the event loop."""
         response = model.generate_content(
             [image_part, prompt],
             generation_config=genai.GenerationConfig(
@@ -140,9 +141,6 @@ async def analyze_image(
     for attempt in range(2):
         try:
             raw_text = await asyncio.to_thread(_call_gemini)
-            # _call_gemini is a coroutine, need to await properly
-            if asyncio.iscoroutine(raw_text):
-                raw_text = await raw_text
             return _parse_and_validate(raw_text, language)
         except (ValueError, Exception) as e:
             logger.warning("Gemini attempt %d failed: %s", attempt + 1, str(e))
